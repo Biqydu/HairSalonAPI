@@ -1,6 +1,6 @@
 using HairSalon.Api.Data;
 using HairSalon.Api.Data.Entities;
-using Microsoft.AspNetCore.Identity;
+using HairSalon.Api.Features.Auth;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -14,7 +14,8 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddRoles<AppRole>()
-    .AddEntityFrameworkStores<AppDbContext>();
+    .AddEntityFrameworkStores<AppDbContext>()
+    .AddUserManager<AppUserManager>();
 
 builder.Services.AddOpenApi();
 
@@ -29,12 +30,8 @@ if (app.Environment.IsDevelopment())
     }); 
 }
 
-var api = app.MapGroup("/api");
-
-var auth = api.MapGroup("/auth")
-    .WithTags("Auth");
-
-auth.MapIdentityApi<AppUser>();
+app.MapGroup("/api")
+    .MapAuthEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
