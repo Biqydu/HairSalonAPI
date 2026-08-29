@@ -6,6 +6,8 @@ public static class ServicesModule
     {
         var group = app.MapGroup("/services")
             .WithTags("Salon Services");
+
+        group.MapCreateService();
         
         return app;
     }
