@@ -22,7 +22,9 @@ public static class CreateService
             .RequireAuthorization(new AuthorizeAttribute { Roles = AppRoles.Admin })
             .WithName("CreateService")
             .WithSummary("Creates a new service")
-            .WithDescription("Creates a new salon service");
+            .WithDescription("Creates a new salon service")
+            .Produces<Response>(StatusCodes.Status201Created)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
 
         return app;
     }
