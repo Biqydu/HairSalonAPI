@@ -1,6 +1,10 @@
+using FluentValidation;
+using HairSalon.Api.Behaviors;
+using HairSalon.Api.Common;
 using HairSalon.Api.Data;
 using HairSalon.Api.Data.Entities;
 using HairSalon.Api.Features.Auth;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -16,6 +20,17 @@ builder.Services.AddIdentityApiEndpoints<AppUser>()
     .AddRoles<AppRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddUserManager<AppUserManager>();
+
+builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+builder.Services.AddMediatR(cfg => {
+    cfg.RegisterServicesFromAssemblyContaining<Program>();
+    
+    cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+});
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.Services.AddProblemDetails();
 
 builder.Services.AddOpenApi();
 
