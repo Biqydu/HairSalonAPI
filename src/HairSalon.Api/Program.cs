@@ -6,7 +6,9 @@ using HairSalon.Api.Data;
 using HairSalon.Api.Data.Entities;
 using HairSalon.Api.Features.Auth;
 using HairSalon.Api.Features.Services;
+using HairSalon.Api.Services;
 using MediatR;
+using Microsoft.AspNetCore.OpenApi;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 
@@ -32,16 +34,43 @@ builder.Services.AddIdentityApiEndpoints<AppUser>()
 
 builder.Services.AddValidatorsFromAssemblyContaining<Program>();
 
-builder.Services.AddMediatR(cfg => {
+builder.Services.AddMediatR(cfg =>
+{
     cfg.RegisterServicesFromAssemblyContaining<Program>();
-    
+
     cfg.AddBehavior(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 });
 
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 builder.Services.AddProblemDetails();
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(options =>
+{
+    options.CreateSchemaReferenceId = jsonTypeInfo =>
+    {
+        var type = jsonTypeInfo.Type;
+        var defaultId = OpenApiOptions.CreateDefaultSchemaReferenceId(jsonTypeInfo);
+        if (defaultId is null) return null;
+
+        if (type.IsGenericType)
+        {
+            var name = type.Name.Split('`')[0];
+            var args = string.Join("And", type.GetGenericArguments().Select(GetNestedName));
+            return $"{name}Of{args}";
+        }
+
+        return type is { IsNested: true, DeclaringType: not null }
+            ? $"{type.DeclaringType.Name}.{type.Name}"
+            : defaultId;
+
+        static string GetNestedName(Type t) =>
+            t is { IsNested: true, DeclaringType: not null }
+                ? $"{t.DeclaringType.Name}.{t.Name}"
+                : t.Name;
+    };
+});
+
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 var app = builder.Build();
 
@@ -53,10 +82,7 @@ app.UseAuthorization();
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference("/api/docs", options =>
-    {
-        options.Theme = ScalarTheme.DeepSpace;
-    }); 
+    app.MapScalarApiReference("/api/docs", options => { options.Theme = ScalarTheme.DeepSpace; });
 }
 
 app.MapGroup("/api")
