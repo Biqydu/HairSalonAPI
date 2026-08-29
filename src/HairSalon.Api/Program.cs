@@ -36,4 +36,18 @@ var auth = api.MapGroup("/auth")
 
 auth.MapIdentityApi<AppUser>();
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        IdentitySeeder.SeedRolesAsync(services).GetAwaiter().GetResult();
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while seeding the application roles.");
+    }
+}
+
 app.Run();
