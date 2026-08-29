@@ -22,5 +22,8 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
             .WithMany()
             .HasForeignKey(a => a.BarberId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(a => a.Status)
+            .HasConversion<string>();
     }
 }
