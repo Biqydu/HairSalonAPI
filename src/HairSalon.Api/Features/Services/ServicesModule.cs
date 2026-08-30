@@ -9,6 +9,7 @@ public static class ServicesModule
 
         group
             .MapCreateService()
+            .MapGetServices()
             .MapGetServiceDetailsById();
 
         return app;
