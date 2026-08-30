@@ -1,3 +1,5 @@
+using ErrorOr;
+using ErrorOrAspNetCoreExtensions;
 using FluentValidation;
 using HairSalon.Api.Constants;
 using HairSalon.Api.Data;
@@ -13,11 +15,16 @@ public static class CreateService
     {
         app.MapPost("/", async (Request request, IMediator mediator, CancellationToken ct) =>
             {
-                var command = new Command(request.Name, request.Description, request.Price, request.Duration, request.IsActive);
+                var command = new Command(
+                    request.Name, 
+                    request.Description, 
+                    request.Price, 
+                    request.Duration, 
+                    request.IsActive);
                 
-                var result  = await mediator.Send(command, ct);
+                var result = await mediator.Send(command, ct);
 
-                return Results.Created($"api/services/{result.ServiceId}", result);
+                return result.ToCreated(response => $"api/services/{response.ServiceId}");
             })
             .RequireAuthorization(new AuthorizeAttribute { Roles = AppRoles.Admin })
             .WithName("CreateService")
@@ -32,19 +39,23 @@ public static class CreateService
     public record Request(string Name, string? Description, decimal Price, int Duration, bool IsActive);
 
     public record Command(string Name, string? Description, decimal Price, int Duration, bool IsActive)
-        : IRequest<Response>;
+        : IRequest<ErrorOr<Response>>;
 
-    public class Handler(AppDbContext db) : IRequestHandler<Command, Response>
+    public class Handler(AppDbContext db) : IRequestHandler<Command, ErrorOr<Response>>
     {
-        public async Task<Response> Handle(Command command, CancellationToken ct)
+        public async Task<ErrorOr<Response>> Handle(Command command, CancellationToken ct)
         {
-            var service = new Service
-            {
-                Name = command.Name,
-                Price = command.Price,
-                Duration = TimeSpan.FromMinutes(command.Duration),
-                IsActive = command.IsActive
-            };
+            var serviceResult = Service.Create(
+                command.Name,
+                command.Description,
+                command.Price,
+                TimeSpan.FromMinutes(command.Duration),
+                command.IsActive);
+
+            if (serviceResult.IsError)
+                return serviceResult.Errors;
+            
+            var service = serviceResult.Value;
             
             db.Services.Add(service);
             await db.SaveChangesAsync(ct);
@@ -59,36 +70,17 @@ public static class CreateService
     {
         public Validator()
         {
-            const int minDuration = 5;
-            const int maxDuration = 360;
-
             RuleFor(x => x.Name)
                 .NotEmpty()
-                .WithMessage("Name is required")
-                .MinimumLength(3)
-                .WithMessage("Name must have at least 3 characters")
-                .MaximumLength(50)
-                .WithMessage("Name cannot exceed 50 characters");
-
-            RuleFor(x => x.Description)
-                .NotEmpty()
-                .WithMessage("Description is required")
-                .MinimumLength(5)
-                .WithMessage("Description must have at least 5 characters")
-                .MaximumLength(500)
-                .WithMessage("Description cannot exceed 500 characters")
-                .When(c => !string.IsNullOrEmpty(c.Description));
+                .WithMessage("Name is required.");
 
             RuleFor(x => x.Price)
                 .GreaterThan(0)
-                .WithMessage("Price must be greater than 0");
+                .WithMessage("Price must be greater than 0.");
 
             RuleFor(x => x.Duration)
-                .InclusiveBetween(minDuration, maxDuration)
-                .WithMessage(
-                    $"Duration must be between {minDuration} and {maxDuration} minutes.")
-                .Must(duration => duration % 5 == 0)
-                .WithMessage("Duration must be a multiple of 5 minutes.");
+                .GreaterThan(0)
+                .WithMessage("Duration must be greater than 0.");
         }
     }
 }
