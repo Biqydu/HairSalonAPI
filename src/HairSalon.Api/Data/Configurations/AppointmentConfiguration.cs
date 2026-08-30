@@ -25,5 +25,8 @@ public sealed class AppointmentConfiguration : IEntityTypeConfiguration<Appointm
 
         builder.Property(a => a.Status)
             .HasConversion<string>();
+
+        builder.Property(a => a.CancellationReason)
+            .HasMaxLength(200);
     }
 }
