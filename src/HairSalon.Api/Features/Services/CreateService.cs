@@ -31,7 +31,7 @@ public static class CreateService
             .WithSummary("Creates a new service")
             .WithDescription("Creates a new salon service")
             .Produces<Response>(StatusCodes.Status201Created)
-            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+            .ProducesProblem(StatusCodes.Status400BadRequest);
 
         return app;
     }
