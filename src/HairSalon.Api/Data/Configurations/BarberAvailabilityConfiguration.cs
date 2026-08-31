@@ -12,8 +12,11 @@ public sealed class BarberAvailabilityConfiguration : IEntityTypeConfiguration<B
             .WithMany()
             .HasForeignKey(ba => ba.BarberId)
             .OnDelete(DeleteBehavior.Restrict);
-        
-        builder.HasIndex(a => new { a.BarberId, a.DayOfWeek })
+
+        builder.HasIndex(ba => new { ba.BarberId, ba.DayOfWeek })
             .IsUnique();
+
+        builder.Property(ba => ba.DayOfWeek)
+            .HasConversion<string>();
     }
 }
