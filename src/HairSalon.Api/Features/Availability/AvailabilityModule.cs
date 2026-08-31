@@ -6,7 +6,11 @@ public static class AvailabilityModule
     {
         var group = app.MapGroup("barbers/{barberId:guid}/availabilities")
             .WithTags("Barber Availability");
-        
+
+        group
+            .MapSetAvailability()
+            .MapSetWeeklyAvailability();
+
         return app;
     }
 }

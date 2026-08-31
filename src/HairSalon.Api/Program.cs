@@ -77,14 +77,14 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-app.UseAuthentication();
-app.UseAuthorization();
-
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
     app.MapScalarApiReference("/api/docs", options => { options.Theme = ScalarTheme.DeepSpace; });
 }
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapGroup("/api")
     .MapAuthEndpoints()
