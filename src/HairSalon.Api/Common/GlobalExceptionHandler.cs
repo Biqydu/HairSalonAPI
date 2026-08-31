@@ -23,13 +23,13 @@ public class GlobalExceptionHandler : IExceptionHandler
 
         var problemDetails = new ProblemDetails
         {
-            Status = StatusCodes.Status422UnprocessableEntity,
+            Status = StatusCodes.Status400BadRequest,
             Title = "Validation Error",
             Detail = "One or more validation errors occurred.",
             Extensions = { ["errors"] = errors }
         };
 
-        httpContext.Response.StatusCode = StatusCodes.Status422UnprocessableEntity;
+        httpContext.Response.StatusCode = StatusCodes.Status400BadRequest;
         await httpContext.Response.WriteAsJsonAsync(problemDetails, cancellationToken);
 
         return true;
