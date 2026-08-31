@@ -5,6 +5,7 @@ using HairSalon.Api.Common;
 using HairSalon.Api.Data;
 using HairSalon.Api.Data.Entities;
 using HairSalon.Api.Features.Auth;
+using HairSalon.Api.Features.Availability;
 using HairSalon.Api.Features.Services;
 using HairSalon.Api.Services;
 using MediatR;
@@ -87,7 +88,8 @@ if (app.Environment.IsDevelopment())
 
 app.MapGroup("/api")
     .MapAuthEndpoints()
-    .MapServicesEndpoints();
+    .MapServicesEndpoints()
+    .MapAvailabilityEndpoints();
 
 using (var scope = app.Services.CreateScope())
 {
